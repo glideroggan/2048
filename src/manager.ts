@@ -21,6 +21,9 @@ export function createBrick(x: number, y: number): Box {
     boxEle.style.left = "0px"
     boxEle.style.top = "0px"
     container.appendChild(boxEle)
+    let boundingRect = boxEle.getBoundingClientRect()
+    // boxEle.style.left = `${boundingRect.left-15}px`
+    // boxEle.style.top = `${boundingRect.top-15}px`
     let box = new Box(boxEle)
     return box
 }
@@ -46,10 +49,12 @@ export function createBoard(): void {
 export function handleKey(event: any) {
     let key = event.keyCode
     if (alreadyMoving) return
+    alreadyMoving = true
 
     setTimeout(() => {
         alreadyMoving = false
-    }, 1000)
+    }, 500)
+
     let direction = getDirection(key)
     if (direction == null) return;
     switch (direction) {
@@ -123,7 +128,7 @@ function spawnBlock(dir: Direction): void {
 
 function searchRight(fn: (x: number, y: number) => void) {
     for (let y = maxY - 1; y >= 0; y--) {
-        for (let x = maxX - 1; x >= 0; x--) {
+        for (let x = maxX - 2; x >= 0; x--) {
             if (lanes[y][x].children.length > 0) {
                 fn(x, y)
             }
@@ -133,7 +138,7 @@ function searchRight(fn: (x: number, y: number) => void) {
 
 function searchLeft(fn: (x: number, y: number) => void) {
     for (let y = maxY - 1; y >= 0; y--) {
-        for (let x = 0; x < maxX; x++) {
+        for (let x = 1; x < maxX; x++) {
             if (lanes[y][x].children.length > 0) {
                 fn(x, y)
             }
@@ -143,7 +148,7 @@ function searchLeft(fn: (x: number, y: number) => void) {
 
 function searchDown(fn: (x: number, y: number) => void) {
     for (let x = maxX - 1; x >= 0; x--) {
-        for (let y = maxY - 1; y >= 0; y--) {
+        for (let y = maxY - 2; y >= 0; y--) {
             if (lanes[y][x].children.length > 0) {
                 fn(x, y)
             }
@@ -153,7 +158,7 @@ function searchDown(fn: (x: number, y: number) => void) {
 
 function searchUp(fn: (x: number, y: number) => void) {
     for (let x = maxX - 1; x >= 0; x--) {
-        for (let y = 0; y < maxY; y++) {
+        for (let y = 1; y < maxY; y++) {
             if (lanes[y][x].children.length > 0) {
                 fn(x, y)
             }
@@ -166,63 +171,92 @@ function moveBlock(x: number, y: number, dir: Direction) {
     */
     let el = lanes[y][x].firstChild as HTMLDivElement
     let destGrid: HTMLDivElement
-    let boundingRect:DOMRect
+    const ti = 900;
+    let boundingRect: DOMRect
     switch (dir) {
         case Direction.Right:
-            // if (x === maxX-1) return;
             for (let x2 = maxX - 1; x2 >= x; x2--) {
-                destGrid = lanes[y][x2] as HTMLDivElement
-                if (destGrid.children.length > 0) {
+                let d = lanes[y][x2] as HTMLDivElement
+                if (d.children.length > 0) {
                     continue
                 }
+                destGrid = d
                 break
             }
-
-            boundingRect = destGrid.getBoundingClientRect()
-            el.style.left = `${boundingRect.left-15}px`
-            setTimeout(() => {
+            if (destGrid == null) return
+            if (true) {
                 destGrid.appendChild(el)
-                el.style.left = "0px"
-            }, 1000)
+            } else {
+                boundingRect = destGrid.getBoundingClientRect()
+                el.style.left = `${boundingRect.left - 15}px`
+                setTimeout(() => {
+                    destGrid.appendChild(el)
+                }, ti)
+            }
+
             break
         case Direction.Down:
-            // if (y === maxY-1) return;
             for (let y2 = maxY - 1; y2 >= y; y2--) {
-                destGrid = lanes[y2][x] as HTMLDivElement
-                if (destGrid.children.length > 0) {
+                let d = lanes[y2][x] as HTMLDivElement
+                if (d.children.length > 0) {
                     continue
                 }
+                destGrid = d
                 break
             }
-
-            boundingRect = destGrid.getBoundingClientRect()
-            el.style.top = `${boundingRect.top-15}px`
-            setTimeout(() => {
+            if (destGrid == null) return
+            if (true) {
                 destGrid.appendChild(el)
-                el.style.top = "0px"
-            }, 1000)
+            } else {
+                boundingRect = destGrid.getBoundingClientRect()
+                el.style.top = `${boundingRect.top - 15}px`
+                setTimeout(() => {
+                    destGrid.appendChild(el)
+                }, ti)
+            }
+
             break
         case Direction.Up:
             for (let y2 = 0; y2 <= y; y2++) {
-                destGrid = lanes[y2][x] as HTMLDivElement
-                if (destGrid.children.length > 0) {
+                let d = lanes[y2][x] as HTMLDivElement
+                if (d.children.length > 0) {
                     continue
                 }
+                destGrid = d
                 break
             }
+            if (destGrid == null) return
+            if (true) {
+                destGrid.appendChild(el)
+            } else {
+                boundingRect = destGrid.getBoundingClientRect()
+                el.style.top = `${boundingRect.top - 15}px`
+                setTimeout(() => {
+                    destGrid.appendChild(el)
+                }, ti)
+            }
 
-            destGrid.appendChild(el)
             break
         case Direction.Left:
             for (let x2 = 0; x2 <= x; x2++) {
-                destGrid = lanes[y][x2] as HTMLDivElement
-                if (destGrid.children.length > 0) {
+                let d = lanes[y][x2] as HTMLDivElement
+                if (d.children.length > 0) {
                     continue
                 }
+                destGrid = d
                 break
             }
+            if (destGrid == null) return
+            if (true) {
+                destGrid.appendChild(el)
+            } else {
+                boundingRect = destGrid.getBoundingClientRect()
+                el.style.left = `${boundingRect.left - 15}px`
+                setTimeout(() => {
+                    destGrid.appendChild(el)
+                }, ti)
+            }
 
-            destGrid.appendChild(el)
             break
     }
 
