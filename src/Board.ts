@@ -1,8 +1,10 @@
-import { Grid, Direction } from "./manager";
+import { Direction } from "./manager";
+import { Grid } from "./Grid";
 
 export class Board {
-    public maxX: number;
-    public maxY: number;
+    public maxX: number
+    public maxY: number
+    private ids: Array<number> = new Array<number>()
     private lanes: Grid[][] = [];
     constructor(maxX: number, maxY: number) {
         this.maxX = maxX;
@@ -36,18 +38,22 @@ export class Board {
         return this.lanes[y][x];
     }
     public createBrick(x: number, y: number): void {
-        this.lanes[y][x].addBox("1");
+        // create new brick, keep track of id, so that we can track it in the renderer
+        const id = this.lanes[y][x].addBox("1");
+        this.ids.push(id)
     }
     getFreeSpaceAndAddBox(x: number, y: number, direction: Direction) {
         if (this.lanes[y][x].filled) {
             const myVal = parseInt(this.lanes[y][x].value);
             const res = this.getFreeSpaceOrSameValueBox(direction, x, y, myVal);
             if (res.free) {
+                debugger
                 res.grid.addBox(this.lanes[y][x].value);
                 this.lanes[y][x].filled = false;
             }
             if (!res.free && res.grid !== null && parseInt(res.grid.value) === myVal) {
                 // merge
+                debugger
                 res.grid.addBox(`${myVal * 2}`);
                 this.lanes[y][x].filled = false;
             }

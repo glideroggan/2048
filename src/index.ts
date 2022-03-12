@@ -12,10 +12,12 @@ window.addEventListener('keyup', (event) => {
         manager.handleKey(event)
         manager.render()
     } else {
-        // TODO: only handle the restart key
         const container = document.body
+        const exists = document.getElementById('gameover')
+        if (exists === undefined) return
         let el = document.createElement('div')
         el.innerHTML = 'Game Over'
+        el.id = 'gameover'
         el.className = 'gameover'
         container.appendChild(el)
         console.log('gameOver')

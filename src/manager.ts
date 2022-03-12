@@ -23,19 +23,6 @@ export enum Direction {
     Right
 }
 
-export class Grid {
-    public value: string
-    // TODO: change to free and update usages
-    public filled: boolean
-    constructor(val?: string) {
-        this.value = val
-    }
-    addBox(val: string) {
-        this.filled = true
-        this.value = val
-    }
-}
-
 export function createBoard(): void {
     board = new Board(4, 4)
 }
@@ -139,7 +126,6 @@ export function startGame() {
 }
 
 export function render() {
-    // TODO: reset merges?
     let c = document.getElementById('grid0')
     const container = document.getElementById('container')
     if (c === null) {
@@ -155,47 +141,58 @@ export function render() {
             }
         }
     }
-    /* TODO: look into the board and put the blocks where
-    they should be according to it 
-    Should we re-create elements or just move them?
-    re-create
-        then we could just clear the area everytime and 
-        create the elements in their correct spots
-    move
-        now we would need to know an id of the element that is
-        connected with the actual box in the board and move that 
-        one to the correct place, not that much work*/
 
-    // re-create
-    // clear
-    let counter = 0
+    /* Add all boxes on the same place <body>
+    they will have position absolute, and will instead <transform> to the correct place */
     for (let y = 0; y < board.maxY; y++) {
         for (let x = 0; x < board.maxX; x++) {
-            const grid = document.getElementById(`grid${counter}`)
-            while (grid.firstChild) {
-                grid.removeChild(grid.firstChild)
+            const grid = board.getBlock(x, y)
+            if (!grid.filled) continue
+            // ok, we got a box, lets find it in the html
+            /* TODO: continue here, calculate the grid number from the x, y
+            get that clientboundingRect and get the translation and add that translate to the box */
+            const box = document.getElementById(`box${grid.Id}`)
+            if (box === null) {
+                // if not found, lets create it with this id
+                const el = document.createElement('div')
+                el.id = `box${grid.Id}`
+                el.innerHTML = grid.value
+                el.className = `block val${parseInt(grid.value)}`
+                
+                document.body.insertBefore(el, container)
             }
-            counter++
         }
     }
+
+    // clear
+    // let counter = 0
+    // for (let y = 0; y < board.maxY; y++) {
+    //     for (let x = 0; x < board.maxX; x++) {
+    //         const grid = document.getElementById(`grid${counter}`)
+    //         while (grid.firstChild) {
+    //             grid.removeChild(grid.firstChild)
+    //         }
+    //         counter++
+    //     }
+    // }
 
     // add actual
-    counter = 0
-    for (let y = 0; y < board.maxY; y++) {
-        for (let x = 0; x < board.maxX; x++) {
-            const grid = document.getElementById(`grid${counter}`)
-            assert(grid !== null, "couldn't find grid")
-            const box = board.getBlock(x, y)
-            if (box.filled) {
-                let el = document.createElement('div')
-                el.innerHTML = box.value
-                const color = `val${box.value}`
-                el.className = `block ${color}`
-                grid.appendChild(el)
-            }
-            counter++
-        }
-    }
+    // counter = 0
+    // for (let y = 0; y < board.maxY; y++) {
+    //     for (let x = 0; x < board.maxX; x++) {
+    //         const grid = document.getElementById(`grid${counter}`)
+    //         assert(grid !== null, "couldn't find grid")
+    //         const box = board.getBlock(x, y)
+    //         if (box.filled) {
+    //             let el = document.createElement('div')
+    //             el.innerHTML = box.value
+    //             const color = `val${box.value}`
+    //             el.className = `block ${color}`
+    //             grid.appendChild(el)
+    //         }
+    //         counter++
+    //     }
+    // }
 }
 
 function getRandomDir(): Direction {
