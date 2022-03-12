@@ -1,9 +1,12 @@
 import { Box } from './box'
 
-const maxX = 4, maxY = 4
-var board = new Array()
+/* TODO:
+    - could be nicer if the new box fades in a bit after the rest, so it is more visible that this is 
+        a new piece
+*/
+
+var board: Board
 var alreadyMoving = false
-var lanes: HTMLDivElement[][] = []
 enum Direction {
     Up = 1,
     Down,
@@ -11,39 +14,114 @@ enum Direction {
     Right
 }
 
-export function createBrick(x: number, y: number): Box {
-    let i = y * maxX + x
-    let container = document.getElementById(`grid${i}`)
-    let boxEle = document.createElement('div')
-    boxEle.className = 'block'
-    boxEle.classList.add('move')
-    boxEle.innerHTML = '1'
-    boxEle.style.left = "0px"
-    boxEle.style.top = "0px"
-    container.appendChild(boxEle)
-    let boundingRect = boxEle.getBoundingClientRect()
-    // boxEle.style.left = `${boundingRect.left-15}px`
-    // boxEle.style.top = `${boundingRect.top-15}px`
-    let box = new Box(boxEle)
-    return box
+class Board {
+    public maxX: number
+    public maxY: number
+    private lanes: Grid[][] = []
+    constructor(maxX: number, maxY: number) {
+        this.maxX = maxX
+        this.maxY = maxY
+
+        for (let y = 0; y < this.maxY; y++) {
+            this.lanes[y] = []
+            for (let x = 0; x < this.maxX; x++) {
+                this.lanes[y][x] = new Grid()
+            }
+        }
+    }
+    public haveBlock(x: number, y: number): boolean {
+        return this.lanes[y][x].filled
+    }
+    public getBlock(x: number, y: number): Grid {
+        return this.lanes[y][x]
+    }
+    public createBrick(x: number, y: number): void {
+        this.lanes[y][x].addBox("1")
+    }
+    getFreeSpaceAndAddBox(x: number, y: number, direction: Direction) {
+        if (this.lanes[y][x].filled) {
+            const pos = this.getFreeSpace(direction, x, y)
+            if (pos != null) {
+                this.lanes[pos.y][pos.x].addBox(this.lanes[y][x].value)
+                this.lanes[y][x].filled = false
+            }
+        }
+    }
+    public tilt(direction: Direction) {
+        switch (direction) {
+            case Direction.Right:
+                for (let y = this.maxY - 1; y >= 0; y--) {
+                    for (let x = this.maxX - 2; x >= 0; x--) {
+                        this.getFreeSpaceAndAddBox(x, y, direction)
+                    }
+                }
+                break
+            case Direction.Left:
+                for (let y = this.maxY - 1; y >= 0; y--) {
+                    for (let x = 1; x < this.maxX; x++) {
+                        this.getFreeSpaceAndAddBox(x, y, direction)
+                    }
+                }
+                break
+            case Direction.Up:
+                for (let x = this.maxX - 1; x >= 0; x--) {
+                    for (let y = 1; y < this.maxY; y++) {
+                        this.getFreeSpaceAndAddBox(x, y, direction)
+                    }
+                }
+                break
+            case Direction.Down:
+                for (let x = this.maxX - 1; x >= 0; x--) {
+                    for (let y = this.maxY - 2; y >= 0; y--) {
+                        this.getFreeSpaceAndAddBox(x, y, direction)
+                    }
+                }
+                break
+        }
+
+
+    }
+    getFreeSpace(direction: Direction, x: number, y: number): { x: number, y: number } | null {
+        switch (direction) {
+            case Direction.Right:
+                for (let x2 = this.maxX - 1; x2 >= x; x2--) {
+                    if (!this.haveBlock(x2, y)) return { x: x2, y }
+                }
+                break
+            case Direction.Left:
+                for (let x2 = 0; x2 < this.maxX; x2++) {
+                    if (!this.haveBlock(x2, y)) return { x: x2, y }
+                }
+                break
+            case Direction.Up:
+                for (let y2 = 0; y2 < this.maxY; y2++) {
+                    if (!this.haveBlock(x, y2)) return { x: x, y:y2 }
+                }
+                break
+            case Direction.Down:
+                for (let y2 = this.maxY-1; y2 >= 0; y2--) {
+                    if (!this.haveBlock(x, y2)) return { x: x, y:y2 }
+                }
+                break
+        }
+        return null
+    }
+}
+
+class Grid {
+    public value: string
+    public filled: boolean
+    constructor(val?: string) {
+        this.value = val
+    }
+    addBox(val: string) {
+        this.filled = true
+        this.value = val
+    }
 }
 
 export function createBoard(): void {
-    let container = document.getElementById('container')
-    let counter = 0;
-
-    for (let y = 0; y < maxY; y++) {
-        lanes[y] = []
-        for (let x = 0; x < maxX; x++) {
-            let ele = document.createElement('div')
-            ele.className = 'item'
-            ele.id = `grid${counter}`
-            board.push(ele)
-            container.appendChild(ele)
-            counter++
-            lanes[y][x] = ele;
-        }
-    }
+    board = new Board(4, 4)
 }
 
 export function handleKey(event: any) {
@@ -57,211 +135,181 @@ export function handleKey(event: any) {
 
     let direction = getDirection(key)
     if (direction == null) return;
-    switch (direction) {
-        case Direction.Right:
-            searchRight((x, y) => moveBlock(x, y, Direction.Right))
-            spawnBlock(Direction.Right)
-            break
-        case Direction.Down:
-            searchDown((x, y) => moveBlock(x, y, Direction.Down))
-            spawnBlock(Direction.Down)
-            break
-        case Direction.Left:
-            searchLeft((x, y) => moveBlock(x, y, Direction.Left))
-            spawnBlock(Direction.Left)
-            break
-        case Direction.Up:
-            searchUp((x, y) => moveBlock(x, y, Direction.Up))
-            spawnBlock(Direction.Up)
-            break
-    }
+    board.tilt(direction)
+    spawnBlock(direction)
 }
 
+function assert(condition: unknown, message: string): asserts condition {
+    if (!condition) throw new Error(message)
+}
+
+// TODO: refactor
 function spawnBlock(dir: Direction): void {
     let freeSpaces = new Array()
     let index: number;
     switch (dir) {
         case Direction.Up:
-            for (let x = 0; x < maxX; x++) {
-                if (lanes[maxY - 1][x].children.length === 0) {
+            for (let x = 0; x < board.maxX; x++) {
+                if (!board.haveBlock(x, board.maxY - 1)) {
                     freeSpaces.push(x)
                 }
             }
 
+            assert(freeSpaces.length > 0, "no free space")
             index = Math.floor(Math.random() * freeSpaces.length)
-            createBrick(freeSpaces[index], maxY - 1)
+            board.createBrick(freeSpaces[index], board.maxY - 1)
             break
         case Direction.Down:
-            for (let x = 0; x < maxX; x++) {
-                if (lanes[0][x].children.length === 0) {
+            for (let x = 0; x < board.maxX; x++) {
+                if (!board.haveBlock(x, 0)) {
                     freeSpaces.push(x)
                 }
             }
 
+            assert(freeSpaces.length > 0, "no free space")
             index = Math.floor(Math.random() * freeSpaces.length)
-            createBrick(freeSpaces[index], 0)
+            board.createBrick(freeSpaces[index], 0)
             break
         case Direction.Left:
-            for (let y = 0; y < maxY; y++) {
-                if (lanes[y][maxX - 1].children.length === 0) {
+            for (let y = 0; y < board.maxY; y++) {
+                if (!board.haveBlock(board.maxX - 1, y)) {
                     freeSpaces.push(y)
                 }
             }
 
+            assert(freeSpaces.length > 0, "no free space")
             index = Math.floor(Math.random() * freeSpaces.length)
-            createBrick(maxX - 1, freeSpaces[index])
+            board.createBrick(board.maxX - 1, freeSpaces[index])
             break
         case Direction.Right:
-            for (let y = 0; y < maxY; y++) {
-                if (lanes[y][0].children.length === 0) {
+            for (let y = 0; y < board.maxY; y++) {
+                if (!board.haveBlock(0, y)) {
                     freeSpaces.push(y)
                 }
             }
 
+            assert(freeSpaces.length > 0, "no free space")
             index = Math.floor(Math.random() * freeSpaces.length)
-            createBrick(0, freeSpaces[index])
+            board.createBrick(0, freeSpaces[index])
             break
     }
-
-
 }
 
-function searchRight(fn: (x: number, y: number) => void) {
-    for (let y = maxY - 1; y >= 0; y--) {
-        for (let x = maxX - 2; x >= 0; x--) {
-            if (lanes[y][x].children.length > 0) {
-                fn(x, y)
-            }
-        }
-    }
-}
+// function searchLeft(fn: (x: number, y: number) => void) {
 
-function searchLeft(fn: (x: number, y: number) => void) {
-    for (let y = maxY - 1; y >= 0; y--) {
-        for (let x = 1; x < maxX; x++) {
-            if (lanes[y][x].children.length > 0) {
-                fn(x, y)
-            }
-        }
-    }
-}
+// }
 
-function searchDown(fn: (x: number, y: number) => void) {
-    for (let x = maxX - 1; x >= 0; x--) {
-        for (let y = maxY - 2; y >= 0; y--) {
-            if (lanes[y][x].children.length > 0) {
-                fn(x, y)
-            }
-        }
-    }
-}
+// function searchDown(fn: (x: number, y: number) => void) {
 
-function searchUp(fn: (x: number, y: number) => void) {
-    for (let x = maxX - 1; x >= 0; x--) {
-        for (let y = 1; y < maxY; y++) {
-            if (lanes[y][x].children.length > 0) {
-                fn(x, y)
-            }
-        }
-    }
-}
+// }
 
-function moveBlock(x: number, y: number, dir: Direction) {
-    /* take block in x, y and move it over to next cell in the direction
-    */
-    let el = lanes[y][x].firstChild as HTMLDivElement
-    let destGrid: HTMLDivElement
-    const ti = 900;
-    let boundingRect: DOMRect
-    switch (dir) {
-        case Direction.Right:
-            for (let x2 = maxX - 1; x2 >= x; x2--) {
-                let d = lanes[y][x2] as HTMLDivElement
-                if (d.children.length > 0) {
-                    continue
-                }
-                destGrid = d
-                break
-            }
-            if (destGrid == null) return
-            if (true) {
-                destGrid.appendChild(el)
-            } else {
-                boundingRect = destGrid.getBoundingClientRect()
-                el.style.left = `${boundingRect.left - 15}px`
-                setTimeout(() => {
-                    destGrid.appendChild(el)
-                }, ti)
-            }
+// function searchUp(fn: (x: number, y: number) => void) {
+//     for (let x = maxX - 1; x >= 0; x--) {
+//         for (let y = 1; y < maxY; y++) {
+//             if (lanes[y][x].children.length > 0) {
+//                 fn(x, y)
+//             }
+//         }
+//     }
+// }
 
-            break
-        case Direction.Down:
-            for (let y2 = maxY - 1; y2 >= y; y2--) {
-                let d = lanes[y2][x] as HTMLDivElement
-                if (d.children.length > 0) {
-                    continue
-                }
-                destGrid = d
-                break
-            }
-            if (destGrid == null) return
-            if (true) {
-                destGrid.appendChild(el)
-            } else {
-                boundingRect = destGrid.getBoundingClientRect()
-                el.style.top = `${boundingRect.top - 15}px`
-                setTimeout(() => {
-                    destGrid.appendChild(el)
-                }, ti)
-            }
+// function moveBlock(x: number, y: number, dir: Direction) {
+//     /* take block in x, y and move it over to next cell in the direction
+//     */
+//     let el = lanes[y][x].firstChild as HTMLDivElement
+//     let destGrid: HTMLDivElement
+//     const ti = 900;
+//     let boundingRect: DOMRect
+//     switch (dir) {
+//         // TODO: add merging of blocks
+//         case Direction.Right:
+//             for (let x2 = maxX - 1; x2 >= x; x2--) {
+//                 let d = lanes[y][x2] as HTMLDivElement
+//                 if (d.children.length > 0) {
+//                     continue
+//                 }
+//                 destGrid = d
+//                 break
+//             }
+//             if (destGrid == null) return
+//             if (true) {
+//                 destGrid.appendChild(el)
+//             } else {
+//                 boundingRect = destGrid.getBoundingClientRect()
+//                 el.style.left = `${boundingRect.left - 15}px`
+//                 setTimeout(() => {
+//                     destGrid.appendChild(el)
+//                 }, ti)
+//             }
 
-            break
-        case Direction.Up:
-            for (let y2 = 0; y2 <= y; y2++) {
-                let d = lanes[y2][x] as HTMLDivElement
-                if (d.children.length > 0) {
-                    continue
-                }
-                destGrid = d
-                break
-            }
-            if (destGrid == null) return
-            if (true) {
-                destGrid.appendChild(el)
-            } else {
-                boundingRect = destGrid.getBoundingClientRect()
-                el.style.top = `${boundingRect.top - 15}px`
-                setTimeout(() => {
-                    destGrid.appendChild(el)
-                }, ti)
-            }
+//             break
+//         case Direction.Down:
+//             for (let y2 = maxY - 1; y2 >= y; y2--) {
+//                 let d = lanes[y2][x] as HTMLDivElement
+//                 if (d.children.length > 0) {
+//                     continue
+//                 }
+//                 destGrid = d
+//                 break
+//             }
+//             if (destGrid == null) return
+//             if (true) {
+//                 destGrid.appendChild(el)
+//             } else {
+//                 boundingRect = destGrid.getBoundingClientRect()
+//                 el.style.top = `${boundingRect.top - 15}px`
+//                 setTimeout(() => {
+//                     destGrid.appendChild(el)
+//                 }, ti)
+//             }
 
-            break
-        case Direction.Left:
-            for (let x2 = 0; x2 <= x; x2++) {
-                let d = lanes[y][x2] as HTMLDivElement
-                if (d.children.length > 0) {
-                    continue
-                }
-                destGrid = d
-                break
-            }
-            if (destGrid == null) return
-            if (true) {
-                destGrid.appendChild(el)
-            } else {
-                boundingRect = destGrid.getBoundingClientRect()
-                el.style.left = `${boundingRect.left - 15}px`
-                setTimeout(() => {
-                    destGrid.appendChild(el)
-                }, ti)
-            }
+//             break
+//         case Direction.Up:
+//             for (let y2 = 0; y2 <= y; y2++) {
+//                 let d = lanes[y2][x] as HTMLDivElement
+//                 if (d.children.length > 0) {
+//                     continue
+//                 }
+//                 destGrid = d
+//                 break
+//             }
+//             if (destGrid == null) return
+//             if (true) {
+//                 destGrid.appendChild(el)
+//             } else {
+//                 boundingRect = destGrid.getBoundingClientRect()
+//                 el.style.top = `${boundingRect.top - 15}px`
+//                 setTimeout(() => {
+//                     destGrid.appendChild(el)
+//                 }, ti)
+//             }
 
-            break
-    }
+//             break
+//         case Direction.Left:
+//             for (let x2 = 0; x2 <= x; x2++) {
+//                 let d = lanes[y][x2] as HTMLDivElement
+//                 if (d.children.length > 0) {
+//                     continue
+//                 }
+//                 destGrid = d
+//                 break
+//             }
+//             if (destGrid == null) return
+//             if (true) {
+//                 destGrid.appendChild(el)
+//             } else {
+//                 boundingRect = destGrid.getBoundingClientRect()
+//                 el.style.left = `${boundingRect.left - 15}px`
+//                 setTimeout(() => {
+//                     destGrid.appendChild(el)
+//                 }, ti)
+//             }
 
-    // TODO: we want this to animate
-}
+//             break
+//     }
+
+//     // TODO: we want this to animate
+// }
 
 
 function getDirection(keyNum: number): Direction {
@@ -273,3 +321,75 @@ function getDirection(keyNum: number): Direction {
     }
     return null
 }
+
+export function startGame() {
+    let dir = getRandomDir()
+    spawnBlock(dir)
+}
+
+export function render() {
+    let c = document.getElementById('grid0')
+    const container = document.getElementById('container')
+    if (c === null) {
+        // create html
+        let counter = 0
+        for (let y = 0; y < board.maxY; y++) {
+            for (let x = 0; x < board.maxX; x++) {
+                let el = document.createElement('div')
+                el.className = 'item'
+                el.id = `grid${counter}`
+                container.appendChild(el)
+                counter++
+            }
+        }
+    }
+    /* TODO: look into the board and put the blocks where
+    they should be according to it 
+    Should we re-create elements or just move them?
+    re-create
+        then we could just clear the area everytime and 
+        create the elements in their correct spots
+    move
+        now we would need to know an id of the element that is
+        connected with the actual box in the board and move that 
+        one to the correct place, not that much work*/
+
+    // re-create
+    // clear
+    let counter = 0
+    for (let y = 0; y < board.maxY; y++) {
+        for (let x = 0; x < board.maxX; x++) {
+            const grid = document.getElementById(`grid${counter}`)
+            while (grid.firstChild) {
+                grid.removeChild(grid.firstChild)
+            }
+            counter++
+        }
+    }
+
+    // add actual
+    counter = 0
+    for (let y = 0; y < board.maxY; y++) {
+        for (let x = 0; x < board.maxX; x++) {
+            const grid = document.getElementById(`grid${counter}`)
+            assert(grid !== null, "couldn't find grid")
+            const box = board.getBlock(x, y)
+            if (box.filled) {
+                let el = document.createElement('div')
+                el.className = 'block'
+                el.innerHTML = box.value
+                grid.appendChild(el)
+            }
+            counter++
+        }
+    }
+}
+
+function getRandomDir(): Direction {
+    const ar = [Direction.Up, Direction.Right, Direction.Down, Direction.Left]
+    const i = Math.floor(Math.random() * 3)
+    return ar[i]
+}
+
+
+

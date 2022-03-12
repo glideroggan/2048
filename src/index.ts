@@ -10,13 +10,13 @@ window.addEventListener('DOMContentLoaded', (event) => {
 
 window.addEventListener('keyup', (event) => {
     manager.handleKey(event)
+    manager.render()
 })
 
 function startGame() {
     manager.createBoard()
-    let arr = new Array()
-    let box = manager.createBrick(0, 0)
-    arr.push(box)
+    manager.startGame()
+    manager.render()
 }
 
 
