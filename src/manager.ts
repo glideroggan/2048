@@ -1,183 +1,28 @@
 
-/* TODO:
+/* BUG:
+    - you can make more than one merge per turn
+        This shouldn't be possible
+        haven't been able to reproduce it
+TODO:
+    - Configure the static website (azure) to handle more than one?
     - need to not use flexbox, as the grid is set, we should always have 4x4
     - We need a way to know that it is game over
     - could be nicer if the new box fades in a bit after the rest, so it is more visible that this is 
         a new piece
 */
 
+import { Board } from "./Board"
+
 var board: Board
 var alreadyMoving = false
-enum Direction {
+export enum Direction {
     Up = 1,
     Down,
     Left,
     Right
 }
 
-class Board {
-    public maxX: number
-    public maxY: number
-    private lanes: Grid[][] = []
-    constructor(maxX: number, maxY: number) {
-        this.maxX = maxX
-        this.maxY = maxY
-
-        for (let y = 0; y < this.maxY; y++) {
-            this.lanes[y] = []
-            for (let x = 0; x < this.maxX; x++) {
-                this.lanes[y][x] = new Grid()
-            }
-        }
-    }
-    public haveBlock(x: number, y: number): boolean {
-        return this.lanes[y][x].filled
-    }
-    public getBlock(x: number, y: number): Grid {
-        return this.lanes[y][x]
-    }
-    public createBrick(x: number, y: number): void {
-        this.lanes[y][x].addBox("1")
-    }
-    getFreeSpaceAndAddBox(x: number, y: number, direction: Direction) {
-        if (this.lanes[y][x].filled) {
-            const myVal = parseInt(this.lanes[y][x].value)
-            const res = this.getFreeSpaceOrSameValueBox(direction, x, y, myVal)
-            if (res.free) {
-                res.grid.addBox(this.lanes[y][x].value)
-                this.lanes[y][x].filled = false
-            }
-            if (!res.free && res.grid !== null && parseInt(res.grid.value) === myVal) {
-                // merge
-                res.grid.addBox(`${myVal*2}`)
-                this.lanes[y][x].filled = false
-            }
-        }
-    }
-    getFreeSpaceOrSameValueBox(direction: Direction, x: number, y: number, val:number): {free:boolean, grid:Grid} {
-        let res: {free:boolean, grid:Grid} = {free:false, grid:null}
-        switch (direction) {
-            case Direction.Right:
-                for (let x2 = x+1; x2 < this.maxX; x2++) {
-                    const grid = this.getBlock(x2, y)
-                    if (grid.filled && parseInt(grid.value) === val) {
-                        // same value, merge
-                        return {free:false, grid}
-                    }
-                    if (!grid.filled) {
-                        res = { free:true, grid }
-                        continue
-                    }
-                    break
-                }
-                break
-            case Direction.Left:
-                for (let x2 = x-1; x2 >= 0; x2--) {
-                    const grid = this.getBlock(x2, y)
-                    if (grid.filled && parseInt(grid.value) === val) {
-                        // same value, merge
-                        return {free:false, grid}
-                    }
-                    if (!grid.filled) {
-                        res = { free:true, grid }
-                        continue
-                    }
-                    break
-                }
-                break
-            case Direction.Up:
-                for (let y2 = y-1; y2 >= 0; y2--) {
-                    const grid = this.getBlock(x, y2)
-                    if (grid.filled && parseInt(grid.value) === val) {
-                        // same value, merge
-                        return {free:false, grid}
-                    }
-                    if (!grid.filled) {
-                        res = { free:true, grid }
-                        continue
-                    }
-                    break
-                }
-                break
-            case Direction.Down:
-                for (let y2 = y+1; y2 < this.maxY; y2++) {
-                    const grid = this.getBlock(x, y2)
-                    if (grid.filled && parseInt(grid.value) === val) {
-                        // same value, merge
-                        return {free:false, grid}
-                    }
-                    if (!grid.filled) {
-                        res = { free:true, grid }
-                        continue
-                    }
-                    break
-                }
-                break
-        }
-        return res
-    }
-    public tilt(direction: Direction) {
-        switch (direction) {
-            case Direction.Right:
-                for (let y = this.maxY - 1; y >= 0; y--) {
-                    for (let x = this.maxX - 2; x >= 0; x--) {
-                        this.getFreeSpaceAndAddBox(x, y, direction)
-                    }
-                }
-                break
-            case Direction.Left:
-                for (let y = this.maxY - 1; y >= 0; y--) {
-                    for (let x = 1; x < this.maxX; x++) {
-                        this.getFreeSpaceAndAddBox(x, y, direction)
-                    }
-                }
-                break
-            case Direction.Up:
-                for (let x = this.maxX - 1; x >= 0; x--) {
-                    for (let y = 1; y < this.maxY; y++) {
-                        this.getFreeSpaceAndAddBox(x, y, direction)
-                    }
-                }
-                break
-            case Direction.Down:
-                for (let x = this.maxX - 1; x >= 0; x--) {
-                    for (let y = this.maxY - 2; y >= 0; y--) {
-                        this.getFreeSpaceAndAddBox(x, y, direction)
-                    }
-                }
-                break
-        }
-
-
-    }
-    getFreeSpace(direction: Direction, x: number, y: number): { x: number, y: number } | null {
-        switch (direction) {
-            case Direction.Right:
-                for (let x2 = this.maxX - 1; x2 >= x; x2--) {
-                    if (!this.haveBlock(x2, y)) return { x: x2, y }
-                }
-                break
-            case Direction.Left:
-                for (let x2 = 0; x2 < this.maxX; x2++) {
-                    if (!this.haveBlock(x2, y)) return { x: x2, y }
-                }
-                break
-            case Direction.Up:
-                for (let y2 = 0; y2 < this.maxY; y2++) {
-                    if (!this.haveBlock(x, y2)) return { x: x, y:y2 }
-                }
-                break
-            case Direction.Down:
-                for (let y2 = this.maxY-1; y2 >= 0; y2--) {
-                    if (!this.haveBlock(x, y2)) return { x: x, y:y2 }
-                }
-                break
-        }
-        return null
-    }
-}
-
-class Grid {
+export class Grid {
     public value: string
     // TODO: change to free and update usages
     public filled: boolean
@@ -265,123 +110,6 @@ function spawnBlock(dir: Direction): void {
     }
 }
 
-// function searchLeft(fn: (x: number, y: number) => void) {
-
-// }
-
-// function searchDown(fn: (x: number, y: number) => void) {
-
-// }
-
-// function searchUp(fn: (x: number, y: number) => void) {
-//     for (let x = maxX - 1; x >= 0; x--) {
-//         for (let y = 1; y < maxY; y++) {
-//             if (lanes[y][x].children.length > 0) {
-//                 fn(x, y)
-//             }
-//         }
-//     }
-// }
-
-// function moveBlock(x: number, y: number, dir: Direction) {
-//     /* take block in x, y and move it over to next cell in the direction
-//     */
-//     let el = lanes[y][x].firstChild as HTMLDivElement
-//     let destGrid: HTMLDivElement
-//     const ti = 900;
-//     let boundingRect: DOMRect
-//     switch (dir) {
-//         // TODO: add merging of blocks
-//         case Direction.Right:
-//             for (let x2 = maxX - 1; x2 >= x; x2--) {
-//                 let d = lanes[y][x2] as HTMLDivElement
-//                 if (d.children.length > 0) {
-//                     continue
-//                 }
-//                 destGrid = d
-//                 break
-//             }
-//             if (destGrid == null) return
-//             if (true) {
-//                 destGrid.appendChild(el)
-//             } else {
-//                 boundingRect = destGrid.getBoundingClientRect()
-//                 el.style.left = `${boundingRect.left - 15}px`
-//                 setTimeout(() => {
-//                     destGrid.appendChild(el)
-//                 }, ti)
-//             }
-
-//             break
-//         case Direction.Down:
-//             for (let y2 = maxY - 1; y2 >= y; y2--) {
-//                 let d = lanes[y2][x] as HTMLDivElement
-//                 if (d.children.length > 0) {
-//                     continue
-//                 }
-//                 destGrid = d
-//                 break
-//             }
-//             if (destGrid == null) return
-//             if (true) {
-//                 destGrid.appendChild(el)
-//             } else {
-//                 boundingRect = destGrid.getBoundingClientRect()
-//                 el.style.top = `${boundingRect.top - 15}px`
-//                 setTimeout(() => {
-//                     destGrid.appendChild(el)
-//                 }, ti)
-//             }
-
-//             break
-//         case Direction.Up:
-//             for (let y2 = 0; y2 <= y; y2++) {
-//                 let d = lanes[y2][x] as HTMLDivElement
-//                 if (d.children.length > 0) {
-//                     continue
-//                 }
-//                 destGrid = d
-//                 break
-//             }
-//             if (destGrid == null) return
-//             if (true) {
-//                 destGrid.appendChild(el)
-//             } else {
-//                 boundingRect = destGrid.getBoundingClientRect()
-//                 el.style.top = `${boundingRect.top - 15}px`
-//                 setTimeout(() => {
-//                     destGrid.appendChild(el)
-//                 }, ti)
-//             }
-
-//             break
-//         case Direction.Left:
-//             for (let x2 = 0; x2 <= x; x2++) {
-//                 let d = lanes[y][x2] as HTMLDivElement
-//                 if (d.children.length > 0) {
-//                     continue
-//                 }
-//                 destGrid = d
-//                 break
-//             }
-//             if (destGrid == null) return
-//             if (true) {
-//                 destGrid.appendChild(el)
-//             } else {
-//                 boundingRect = destGrid.getBoundingClientRect()
-//                 el.style.left = `${boundingRect.left - 15}px`
-//                 setTimeout(() => {
-//                     destGrid.appendChild(el)
-//                 }, ti)
-//             }
-
-//             break
-//     }
-
-//     // TODO: we want this to animate
-// }
-
-
 function getDirection(keyNum: number): Direction {
     switch (keyNum) {
         case 37: return Direction.Left
@@ -398,6 +126,7 @@ export function startGame() {
 }
 
 export function render() {
+    // TODO: reset merges?
     let c = document.getElementById('grid0')
     const container = document.getElementById('container')
     if (c === null) {
