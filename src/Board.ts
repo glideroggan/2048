@@ -1,7 +1,6 @@
 import { Grid, Direction } from "./manager";
 
 export class Board {
-    
     public maxX: number;
     public maxY: number;
     private lanes: Grid[][] = [];
@@ -15,6 +14,20 @@ export class Board {
                 this.lanes[y][x] = new Grid();
             }
         }
+    }
+    public noMovesLeft(): boolean {
+        const dir = [Direction.Left, Direction.Up, Direction.Right, Direction.Down]
+        for (let y = 0; y < this.maxY; y++) {
+            for (let x = 0; x < this.maxX; x++) {
+                for (let d of dir) {
+                    const box = this.getBlock(x, y)
+                    if (!box.filled) return false
+                    const res = this.getFreeSpaceOrSameValueBox(d, x, y, parseInt(box.value))
+                    if (res.free || res.grid != null) return false
+                }
+            }
+        }
+        return true
     }
     public haveBlock(x: number, y: number): boolean {
         return this.lanes[y][x].filled;
@@ -40,7 +53,8 @@ export class Board {
             }
         }
     }
-    getFreeSpaceOrSameValueBox(direction: Direction, x: number, y: number, val: number): { free: boolean; grid: Grid; } {
+    getFreeSpaceOrSameValueBox
+        (direction: Direction, x: number, y: number, val: number): { free: boolean; grid: Grid; } {
         let res: { free: boolean; grid: Grid; } = { free: false, grid: null };
         switch (direction) {
             case Direction.Right:

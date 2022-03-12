@@ -8,8 +8,18 @@ window.addEventListener('DOMContentLoaded', (event) => {
 })
 
 window.addEventListener('keyup', (event) => {
-    manager.handleKey(event)
-    manager.render()
+    if (!manager.isGameOver) {
+        manager.handleKey(event)
+        manager.render()
+    } else {
+        // TODO: only handle the restart key
+        const container = document.body
+        let el = document.createElement('div')
+        el.innerHTML = 'Game Over'
+        el.className = 'gameover'
+        container.appendChild(el)
+        console.log('gameOver')
+    }
 })
 
 function startGame() {

@@ -14,7 +14,8 @@ TODO:
 import { Board } from "./Board"
 
 var board: Board
-var alreadyMoving = false
+var alreadyMoving: boolean = false
+export var isGameOver: boolean = false
 export enum Direction {
     Up = 1,
     Down,
@@ -52,13 +53,13 @@ export function handleKey(event: any) {
     if (direction == null) return;
     board.tilt(direction)
     spawnBlock(direction)
+    if (board.noMovesLeft()) isGameOver = true
 }
 
 function assert(condition: unknown, message: string): asserts condition {
     if (!condition) throw new Error(message)
 }
 
-// TODO: refactor
 function spawnBlock(dir: Direction): void {
     let freeSpaces = new Array()
     let index: number;
@@ -70,7 +71,10 @@ function spawnBlock(dir: Direction): void {
                 }
             }
 
-            assert(freeSpaces.length > 0, "no free space")
+            if (freeSpaces.length == 0) {
+                console.log('no moves Up')
+                return
+            }
             index = Math.floor(Math.random() * freeSpaces.length)
             board.createBrick(freeSpaces[index], board.maxY - 1)
             break
@@ -81,7 +85,10 @@ function spawnBlock(dir: Direction): void {
                 }
             }
 
-            assert(freeSpaces.length > 0, "no free space")
+            if (freeSpaces.length == 0) {
+                console.log('no moves Down')
+                return
+            }
             index = Math.floor(Math.random() * freeSpaces.length)
             board.createBrick(freeSpaces[index], 0)
             break
@@ -92,7 +99,10 @@ function spawnBlock(dir: Direction): void {
                 }
             }
 
-            assert(freeSpaces.length > 0, "no free space")
+            if (freeSpaces.length == 0) {
+                console.log('no moves Left')
+                return
+            }
             index = Math.floor(Math.random() * freeSpaces.length)
             board.createBrick(board.maxX - 1, freeSpaces[index])
             break
@@ -103,7 +113,10 @@ function spawnBlock(dir: Direction): void {
                 }
             }
 
-            assert(freeSpaces.length > 0, "no free space")
+            if (freeSpaces.length == 0) {
+                console.log('no moves Right')
+                return
+            }
             index = Math.floor(Math.random() * freeSpaces.length)
             board.createBrick(0, freeSpaces[index])
             break

@@ -13,6 +13,11 @@
     border-style: solid;
 
 }
+
+.gameover {
+    font-size: 10em;
+}
+
 .item {
     display: flex;
     justify-content: center;
