@@ -1,5 +1,4 @@
 import boiler from './services/boilService'
-import { Box } from './box'
 import  * as manager from './manager'
 
 window.addEventListener('DOMContentLoaded', (event) => {

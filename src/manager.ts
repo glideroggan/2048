@@ -1,6 +1,7 @@
-import { Box } from './box'
 
 /* TODO:
+    - need to not use flexbox, as the grid is set, we should always have 4x4
+    - We need a way to know that it is game over
     - could be nicer if the new box fades in a bit after the rest, so it is more visible that this is 
         a new piece
 */
@@ -40,12 +41,80 @@ class Board {
     }
     getFreeSpaceAndAddBox(x: number, y: number, direction: Direction) {
         if (this.lanes[y][x].filled) {
-            const pos = this.getFreeSpace(direction, x, y)
-            if (pos != null) {
-                this.lanes[pos.y][pos.x].addBox(this.lanes[y][x].value)
+            const myVal = parseInt(this.lanes[y][x].value)
+            const res = this.getFreeSpaceOrSameValueBox(direction, x, y, myVal)
+            if (res.free) {
+                res.grid.addBox(this.lanes[y][x].value)
+                this.lanes[y][x].filled = false
+            }
+            if (!res.free && res.grid !== null && parseInt(res.grid.value) === myVal) {
+                // merge
+                res.grid.addBox(`${myVal*2}`)
                 this.lanes[y][x].filled = false
             }
         }
+    }
+    getFreeSpaceOrSameValueBox(direction: Direction, x: number, y: number, val:number): {free:boolean, grid:Grid} {
+        let res: {free:boolean, grid:Grid} = {free:false, grid:null}
+        switch (direction) {
+            case Direction.Right:
+                for (let x2 = x+1; x2 < this.maxX; x2++) {
+                    const grid = this.getBlock(x2, y)
+                    if (grid.filled && parseInt(grid.value) === val) {
+                        // same value, merge
+                        return {free:false, grid}
+                    }
+                    if (!grid.filled) {
+                        res = { free:true, grid }
+                        continue
+                    }
+                    break
+                }
+                break
+            case Direction.Left:
+                for (let x2 = x-1; x2 >= 0; x2--) {
+                    const grid = this.getBlock(x2, y)
+                    if (grid.filled && parseInt(grid.value) === val) {
+                        // same value, merge
+                        return {free:false, grid}
+                    }
+                    if (!grid.filled) {
+                        res = { free:true, grid }
+                        continue
+                    }
+                    break
+                }
+                break
+            case Direction.Up:
+                for (let y2 = y-1; y2 >= 0; y2--) {
+                    const grid = this.getBlock(x, y2)
+                    if (grid.filled && parseInt(grid.value) === val) {
+                        // same value, merge
+                        return {free:false, grid}
+                    }
+                    if (!grid.filled) {
+                        res = { free:true, grid }
+                        continue
+                    }
+                    break
+                }
+                break
+            case Direction.Down:
+                for (let y2 = y+1; y2 < this.maxY; y2++) {
+                    const grid = this.getBlock(x, y2)
+                    if (grid.filled && parseInt(grid.value) === val) {
+                        // same value, merge
+                        return {free:false, grid}
+                    }
+                    if (!grid.filled) {
+                        res = { free:true, grid }
+                        continue
+                    }
+                    break
+                }
+                break
+        }
+        return res
     }
     public tilt(direction: Direction) {
         switch (direction) {
@@ -110,6 +179,7 @@ class Board {
 
 class Grid {
     public value: string
+    // TODO: change to free and update usages
     public filled: boolean
     constructor(val?: string) {
         this.value = val
@@ -131,7 +201,7 @@ export function handleKey(event: any) {
 
     setTimeout(() => {
         alreadyMoving = false
-    }, 500)
+    }, 250)
 
     let direction = getDirection(key)
     if (direction == null) return;
@@ -376,8 +446,9 @@ export function render() {
             const box = board.getBlock(x, y)
             if (box.filled) {
                 let el = document.createElement('div')
-                el.className = 'block'
                 el.innerHTML = box.value
+                const color = `val${box.value}`
+                el.className = `block ${color}`
                 grid.appendChild(el)
             }
             counter++
