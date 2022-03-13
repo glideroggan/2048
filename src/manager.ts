@@ -4,9 +4,8 @@
         This shouldn't be possible
         haven't been able to reproduce it
 TODO:
-    - Configure the static website (azure) to handle more than one?
-    - need to not use flexbox, as the grid is set, we should always have 4x4
-    - responsive
+    - check for win
+    - make a debug undo move
 */
 
 import { Board } from "./Board"
@@ -29,10 +28,18 @@ export function handleKey(event: any) {
     let key = event.keyCode
     if (alreadyMoving) return
     alreadyMoving = true
-
     setTimeout(() => {
         alreadyMoving = false
     }, 500)
+
+    if (key === 90) {
+        board.UndoMove()
+        return
+    }    
+
+    board.saveState()
+
+    
 
     let direction = getDirection(key)
     if (direction == null) return;
@@ -162,7 +169,7 @@ export function render() {
 
     // remove box that have been deleted in game
     for (const deleteItem of board.deleteIds) {
-        const deleteBox = document.getElementById(`box${deleteItem.id}`)
+        const deleteBox = document.getElementById(`box${deleteItem}`)
         const parent = deleteBox.parentNode as HTMLElement
         parent.removeChild(deleteBox)
     }

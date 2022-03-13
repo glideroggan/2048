@@ -1,6 +1,6 @@
 
 export class Grid {
-    private static IdCounter: number = 0;
+    public static IdCounter: number = 0;
     private id:number
     get Id():number { return this.id }
     public value: string;
@@ -19,5 +19,14 @@ export class Grid {
         }
         
         return this.id
+    }
+    clone(): Grid {
+        let r = new Grid()
+        r.id = this.id
+        r.value = this.value
+        r.filled = this.filled
+        // r.clone = this.clone
+        // r.addBox = this.addBox
+        return r
     }
 }

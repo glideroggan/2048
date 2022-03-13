@@ -2,11 +2,14 @@ import { Direction } from "./manager";
 import { Grid } from "./Grid";
 
 export class Board {
+    
+    
     public maxX: number
     public maxY: number
-    public deleteIds: Array<{ id: number, x: number, y: number }> = new Array<{ id: number, x: number, y: number }>()
+    public deleteIds: Array<number> = new Array<number>()
     private ids: Array<number> = new Array<number>()
     private lanes: Grid[][] = [];
+    private savedLanes: Grid[][] = [];
     constructor(maxX: number, maxY: number) {
         this.maxX = maxX;
         this.maxY = maxY;
@@ -15,6 +18,23 @@ export class Board {
             this.lanes[y] = [];
             for (let x = 0; x < this.maxX; x++) {
                 this.lanes[y][x] = new Grid();
+            }
+        }
+    }
+    UndoMove() {
+        for (let y = 0; y < this.maxY; y++) {
+            this.lanes[y] = [];
+            for (let x = 0; x < this.maxX; x++) {
+                this.lanes[y][x] = this.savedLanes[y][x].clone()
+            }
+        }
+        this.deleteIds.push(Grid.IdCounter-1)
+    }
+    saveState() {
+        for (let y = 0; y < this.maxY; y++) {
+            this.savedLanes[y] = [];
+            for (let x = 0; x < this.maxX; x++) {
+                this.savedLanes[y][x] = this.lanes[y][x].clone()
             }
         }
     }
@@ -55,7 +75,7 @@ export class Board {
                 // merge
                 res.grid.addBox(`${myVal * 2}`, res.grid.Id);
 
-                this.deleteIds.push({ id: this.lanes[y][x].Id, x, y })
+                this.deleteIds.push(this.lanes[y][x].Id)
                 this.lanes[y][x].filled = false;
             }
         }
