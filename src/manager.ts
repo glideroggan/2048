@@ -155,6 +155,7 @@ export function render() {
             box.style.left = `${htmlGrid.offsetLeft}px`
             box.style.top = `${htmlGrid.offsetTop}px`
             box.innerHTML = grid.value
+            box.style.width = `${htmlGrid.offsetWidth}px`
             box.className = `block val${parseInt(grid.value)}`
         }
     }
@@ -184,6 +185,7 @@ export function render() {
                     el.className = `block val${parseInt(grid.value)}`
                     el.style.left = `${htmlGrid.offsetLeft}px`
                     el.style.top = `${htmlGrid.offsetTop}px`
+                    el.style.width = `${htmlGrid.offsetWidth}px`
     
                     document.body.insertBefore(el, container)
                 }

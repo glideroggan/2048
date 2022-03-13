@@ -4,7 +4,6 @@ export class Grid {
     private id:number
     get Id():number { return this.id }
     public value: string;
-    // TODO: change to free and update usages
     public filled: boolean;
     constructor(val?: string) {
         this.value = val;
