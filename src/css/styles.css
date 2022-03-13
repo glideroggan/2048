@@ -42,10 +42,10 @@
     height: 200px;
     /* padding: 5; */
     overflow: hidden;
-    /* -webkit-transition: left 1s, top 1s;
-    -moz-transition: left 1s, top 1s;
-    transition: left 1s, top 1s;
-    transition-timing-function: linear; */
+    -webkit-transition: left 250ms, top 250ms;
+    -moz-transition: left 250ms, top 250ms;
+    transition: left 250ms, top 250ms;
+    transition-timing-function: linear;
 }
 
 .val1 {

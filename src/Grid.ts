@@ -9,11 +9,16 @@ export class Grid {
     constructor(val?: string) {
         this.value = val;
     }
-    addBox(val: string): number {
-        this.filled = true;
-        this.value = val;
-        this.id = Grid.IdCounter;
-        Grid.IdCounter++;
-        return this.id;
+    addBox(val: string, id?:number): number {
+        this.filled = true
+        this.value = val
+        if (id == null) {
+            this.id = Grid.IdCounter
+            Grid.IdCounter++
+        } else {
+            this.id = id
+        }
+        
+        return this.id
     }
 }

@@ -4,6 +4,7 @@ import { Grid } from "./Grid";
 export class Board {
     public maxX: number
     public maxY: number
+    public deleteIds: Array<{id:number, x:number, y:number}> = new Array<{id:number, x:number, y:number}>()
     private ids: Array<number> = new Array<number>()
     private lanes: Grid[][] = [];
     constructor(maxX: number, maxY: number) {
@@ -47,14 +48,14 @@ export class Board {
             const myVal = parseInt(this.lanes[y][x].value);
             const res = this.getFreeSpaceOrSameValueBox(direction, x, y, myVal);
             if (res.free) {
-                debugger
-                res.grid.addBox(this.lanes[y][x].value);
+                res.grid.addBox(this.lanes[y][x].value, this.lanes[y][x].Id);
                 this.lanes[y][x].filled = false;
             }
             if (!res.free && res.grid !== null && parseInt(res.grid.value) === myVal) {
                 // merge
-                debugger
-                res.grid.addBox(`${myVal * 2}`);
+                res.grid.addBox(`${myVal * 2}`, res.grid.Id);
+
+                this.deleteIds.push({id:this.lanes[y][x].Id, x, y})
                 this.lanes[y][x].filled = false;
             }
         }
@@ -63,6 +64,7 @@ export class Board {
         (direction: Direction, x: number, y: number, val: number): { free: boolean; grid: Grid; } {
         let res: { free: boolean; grid: Grid; } = { free: false, grid: null };
         switch (direction) {
+            // TODO: we could refactor these by setting the changing values between them
             case Direction.Right:
                 for (let x2 = x + 1; x2 < this.maxX; x2++) {
                     const grid = this.getBlock(x2, y);
@@ -70,11 +72,8 @@ export class Board {
                         // same value, merge
                         return { free: false, grid };
                     }
-                    if (!grid.filled) {
-                        res = { free: true, grid };
-                        continue;
-                    }
-                    break;
+                    if (grid.filled) break;
+                    res = { free: true, grid };
                 }
                 break;
             case Direction.Left:
@@ -84,11 +83,8 @@ export class Board {
                         // same value, merge
                         return { free: false, grid };
                     }
-                    if (!grid.filled) {
-                        res = { free: true, grid };
-                        continue;
-                    }
-                    break;
+                    if (grid.filled) break;
+                    res = { free: true, grid };
                 }
                 break;
             case Direction.Up:
@@ -98,11 +94,8 @@ export class Board {
                         // same value, merge
                         return { free: false, grid };
                     }
-                    if (!grid.filled) {
-                        res = { free: true, grid };
-                        continue;
-                    }
-                    break;
+                    if (grid.filled) break;
+                    res = { free: true, grid };
                 }
                 break;
             case Direction.Down:
@@ -112,11 +105,8 @@ export class Board {
                         // same value, merge
                         return { free: false, grid };
                     }
-                    if (!grid.filled) {
-                        res = { free: true, grid };
-                        continue;
-                    }
-                    break;
+                    if (grid.filled) break;
+                    res = { free: true, grid };
                 }
                 break;
         }
@@ -186,3 +176,5 @@ export class Board {
         return null;
     }
 }
+
+

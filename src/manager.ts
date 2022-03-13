@@ -34,7 +34,7 @@ export function handleKey(event: any) {
 
     setTimeout(() => {
         alreadyMoving = false
-    }, 250)
+    }, 500)
 
     let direction = getDirection(key)
     if (direction == null) return;
@@ -152,47 +152,50 @@ export function render() {
             /* TODO: continue here, calculate the grid number from the x, y
             get that clientboundingRect and get the translation and add that translate to the box */
             const box = document.getElementById(`box${grid.Id}`)
-            if (box === null) {
-                // if not found, lets create it with this id
-                const el = document.createElement('div')
-                el.id = `box${grid.Id}`
-                el.innerHTML = grid.value
-                el.className = `block val${parseInt(grid.value)}`
-                
-                document.body.insertBefore(el, container)
-            }
+            const i = y * board.maxX + x
+            let htmlGrid = document.getElementById(`grid${i}`)
+            if (box === null) continue
+
+            box.style.left = `${htmlGrid.offsetLeft}px`
+            box.style.top = `${htmlGrid.offsetTop}px`
+            box.innerHTML = grid.value
+            box.className = `block val${parseInt(grid.value)}`
         }
     }
 
-    // clear
-    // let counter = 0
-    // for (let y = 0; y < board.maxY; y++) {
-    //     for (let x = 0; x < board.maxX; x++) {
-    //         const grid = document.getElementById(`grid${counter}`)
-    //         while (grid.firstChild) {
-    //             grid.removeChild(grid.firstChild)
-    //         }
-    //         counter++
-    //     }
-    // }
+    // TODO: we should wait until the transition is done, probably better ways to do that than
+    // using a timeout
+    // remove box that have been deleted in game
+    for (const deleteItem of board.deleteIds) {
+        const deleteBox = document.getElementById(`box${deleteItem.id}`)
+        const parent = deleteBox.parentNode as HTMLElement
+        parent.removeChild(deleteBox)
+    }
+    board.deleteIds.length = 0
 
-    // add actual
-    // counter = 0
-    // for (let y = 0; y < board.maxY; y++) {
-    //     for (let x = 0; x < board.maxX; x++) {
-    //         const grid = document.getElementById(`grid${counter}`)
-    //         assert(grid !== null, "couldn't find grid")
-    //         const box = board.getBlock(x, y)
-    //         if (box.filled) {
-    //             let el = document.createElement('div')
-    //             el.innerHTML = box.value
-    //             const color = `val${box.value}`
-    //             el.className = `block ${color}`
-    //             grid.appendChild(el)
-    //         }
-    //         counter++
-    //     }
-    // }
+    // TODO: here we should add all new boxes
+    setTimeout(() => {
+        for (let y = 0; y < board.maxY; y++) {
+            for (let x = 0; x < board.maxX; x++) {
+                const grid = board.getBlock(x, y)
+                if (!grid.filled) continue
+                const box = document.getElementById(`box${grid.Id}`)
+                const i = y * board.maxX + x
+                let htmlGrid = document.getElementById(`grid${i}`)
+                if (box === null) {
+                    // if not found, lets create it with this id
+                    const el = document.createElement('div')
+                    el.id = `box${grid.Id}`
+                    el.innerHTML = grid.value
+                    el.className = `block val${parseInt(grid.value)}`
+                    el.style.left = `${htmlGrid.offsetLeft}px`
+                    el.style.top = `${htmlGrid.offsetTop}px`
+    
+                    document.body.insertBefore(el, container)
+                }
+            }
+        }    
+    }, 500);
 }
 
 function getRandomDir(): Direction {
