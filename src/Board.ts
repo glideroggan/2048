@@ -4,7 +4,7 @@ import { Grid } from "./Grid";
 export class Board {
     public maxX: number
     public maxY: number
-    public deleteIds: Array<{id:number, x:number, y:number}> = new Array<{id:number, x:number, y:number}>()
+    public deleteIds: Array<{ id: number, x: number, y: number }> = new Array<{ id: number, x: number, y: number }>()
     private ids: Array<number> = new Array<number>()
     private lanes: Grid[][] = [];
     constructor(maxX: number, maxY: number) {
@@ -55,7 +55,7 @@ export class Board {
                 // merge
                 res.grid.addBox(`${myVal * 2}`, res.grid.Id);
 
-                this.deleteIds.push({id:this.lanes[y][x].Id, x, y})
+                this.deleteIds.push({ id: this.lanes[y][x].Id, x, y })
                 this.lanes[y][x].filled = false;
             }
         }
@@ -64,7 +64,6 @@ export class Board {
         (direction: Direction, x: number, y: number, val: number): { free: boolean; grid: Grid; } {
         let res: { free: boolean; grid: Grid; } = { free: false, grid: null };
         switch (direction) {
-            // TODO: we could refactor these by setting the changing values between them
             case Direction.Right:
                 for (let x2 = x + 1; x2 < this.maxX; x2++) {
                     const grid = this.getBlock(x2, y);

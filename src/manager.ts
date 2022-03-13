@@ -6,9 +6,7 @@
 TODO:
     - Configure the static website (azure) to handle more than one?
     - need to not use flexbox, as the grid is set, we should always have 4x4
-    - We need a way to know that it is game over
-    - could be nicer if the new box fades in a bit after the rest, so it is more visible that this is 
-        a new piece
+    - responsive
 */
 
 import { Board } from "./Board"
@@ -149,8 +147,6 @@ export function render() {
             const grid = board.getBlock(x, y)
             if (!grid.filled) continue
             // ok, we got a box, lets find it in the html
-            /* TODO: continue here, calculate the grid number from the x, y
-            get that clientboundingRect and get the translation and add that translate to the box */
             const box = document.getElementById(`box${grid.Id}`)
             const i = y * board.maxX + x
             let htmlGrid = document.getElementById(`grid${i}`)
@@ -163,8 +159,6 @@ export function render() {
         }
     }
 
-    // TODO: we should wait until the transition is done, probably better ways to do that than
-    // using a timeout
     // remove box that have been deleted in game
     for (const deleteItem of board.deleteIds) {
         const deleteBox = document.getElementById(`box${deleteItem.id}`)
@@ -173,7 +167,7 @@ export function render() {
     }
     board.deleteIds.length = 0
 
-    // TODO: here we should add all new boxes
+    // here we should add all new boxes
     setTimeout(() => {
         for (let y = 0; y < board.maxY; y++) {
             for (let x = 0; x < board.maxX; x++) {
